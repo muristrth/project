@@ -373,7 +373,6 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
       return () => unsubscribeEvents();
     }
-    }
   }, [isAuthReady, firestoreDb, userId, getCollectionRef, showToast]);
 
   useEffect(() => {
