@@ -226,67 +226,10 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { firestoreDb, userId, isAuthReady } = useContext(FirebaseContext);
   const { showToast } = useToast();
 
-  interface UserTransaction {
-    id: string;
-    amount: number;
-    description: string;
-    date?: any; // Firestore Timestamp or Date
-    type: string;
-    category: string;
-    event_id?: string;
-    payment_method: string;
-    customer_id?: string;
-    flow_type: string;
-    status?: string;
-    // Add other fields as needed
-  }
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
-  interface Account {
-    id: string;
-    name: string;
-    type: string;
-    category: string;
-    balance: number;
-  }
-  // Rename custom Event interface to AppEvent
-  interface AppEvent {
-    id: string;
-    [key: string]: any;
-  }
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [events, setEvents] = useState<AppEvent[]>([]);
-  interface Customer {
-    id: string;
-    name?: string;
-    email?: string;
-    phone?: string;
-    [key: string]: any;
-  }
   const [customers, setCustomers] = useState<Customer[]>([]);
-
-  // ... rest of the code remains unchanged ...
-
-  const accountingContextValue = {
-    transactions,
-    accounts,
-    events,
-    customers,
-    addTransaction,
-    addEvent,
-    addCustomer,
-    updateAccountBalance, // Exposed for direct balance updates if needed (e.g., initial cash deposit)
-    generateCashFlowStatement,
-    generateIncomeStatement,
-    generateBalanceSheet,
-    generateSalesReports,
-  };
-
-  return (
-    <AccountingContext.Provider value={accountingContextValue}>
-      {children}
-    </AccountingContext.Provider>
-  );
-};
 
   // Initial accounts setup - a basic Chart of Accounts
   const defaultAccounts = [
@@ -434,18 +377,6 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
    * @param {string} transactionData.category General category (e.g., 'ticket_sales', 'venue_rental', 'marketing').
    * @param {'operating'|'investing'|'financing'} transactionData.flow_type Cash flow statement classification.
    */
-  interface AddTransactionData {
-    type: 'revenue' | 'cost' | 'payout' | 'refund';
-    amount: number | string;
-    description: string;
-    event_id?: string | null;
-    payment_method: string;
-    customer_id?: string | null;
-    category: string;
-    flow_type: 'operating' | 'investing' | 'financing';
-    status?: string;
-  }
-
   const addTransaction = useCallback(async (transactionData: AddTransactionData) => {
     const transactionsRef = getCollectionRef('transactions');
     if (!transactionsRef) {
@@ -735,9 +666,9 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 };
 
 // Add Transaction Modal
-const AddTransactionModal = ({ isOpen, onClose }) => {
-  const { addTransaction, accounts, events, customers } = useContext(AccountingContext);
-  const { showToast } = useContext(ToastContext);
+const AddTransactionModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const { addTransaction, accounts, events, customers } = useContext(AccountingContext)!;
+  const { showToast } = useContext(ToastContext)!;
 
   const [type, setType] = useState('revenue');
   const [amount, setAmount] = useState('');
@@ -747,10 +678,10 @@ const AddTransactionModal = ({ isOpen, onClose }) => {
   const [customerId, setCustomerId] = useState('');
   const [category, setCategory] = useState('');
   const [flowType, setFlowType] = useState('operating');
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       newErrors.amount = "Amount must be a positive number.";
     }
@@ -767,7 +698,7 @@ const AddTransactionModal = ({ isOpen, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
       showToast("Please correct the errors in the form.", "error");
@@ -776,14 +707,14 @@ const AddTransactionModal = ({ isOpen, onClose }) => {
 
     try {
       await addTransaction({
-        type,
+        type: type as 'revenue' | 'cost' | 'payout' | 'refund',
         amount: parseFloat(amount), // Ensure amount is parsed here
         description,
         event_id: eventId || null,
         payment_method: paymentMethod,
         customer_id: customerId || null,
         category,
-        flow_type: flowType,
+        flow_type: flowType as 'operating' | 'investing' | 'financing',
       });
       onClose(); // Close modal on success
       // Reset form
@@ -965,19 +896,19 @@ const AddTransactionModal = ({ isOpen, onClose }) => {
 
 
 // Add Event Modal
-const AddEventModal = ({ isOpen, onClose }) => {
-  const { addEvent } = useContext(AccountingContext);
-  const { showToast } = useContext(ToastContext);
+const AddEventModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const { addEvent } = useContext(AccountingContext)!;
+  const { showToast } = useContext(ToastContext)!;
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
   const [category, setCategory] = useState('');
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = "Title cannot be empty.";
     if (!description.trim()) newErrors.description = "Description cannot be empty.";
     if (!date) newErrors.date = "Date is required.";
@@ -987,7 +918,7 @@ const AddEventModal = ({ isOpen, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
       showToast("Please correct the errors in the form.", "error");
@@ -1032,7 +963,7 @@ const AddEventModal = ({ isOpen, onClose }) => {
             onChange={(e) => { setDescription(e.target.value); setErrors(prev => ({ ...prev, description: '' })); }}
             className={`shadow appearance-none border rounded-lg w-full py-2 px-3 bg-gray-700 text-white leading-tight focus:outline-none focus:shadow-outline ${errors.description ? 'border-red-500' : 'focus:border-purple-500'}`}
             placeholder="Brief description of the event"
-            rows="3"
+            rows={3}
             required
           ></textarea>
           {errors.description && <p className="text-red-400 text-xs italic mt-1">{errors.description}</p>}
@@ -1088,7 +1019,7 @@ const AddEventModal = ({ isOpen, onClose }) => {
 
 // Events View Component
 const EventsView = () => {
-  const { events } = useContext(AccountingContext);
+  const { events } = useContext(AccountingContext)!;
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -1155,17 +1086,17 @@ const EventsView = () => {
 
 
 // Add Customer Modal
-const AddCustomerModal = ({ isOpen, onClose }) => {
-  const { addCustomer } = useContext(AccountingContext);
-  const { showToast } = useContext(ToastContext);
+const AddCustomerModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const { addCustomer } = useContext(AccountingContext)!;
+  const { showToast } = useContext(ToastContext)!;
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = "Name cannot be empty.";
     if (!email.trim()) newErrors.email = "Email cannot be empty.";
     else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Invalid email format.";
@@ -1173,7 +1104,7 @@ const AddCustomerModal = ({ isOpen, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
       showToast("Please correct the errors in the form.", "error");
@@ -1245,7 +1176,7 @@ const AddCustomerModal = ({ isOpen, onClose }) => {
 
 // Customers View Component
 const CustomersView = () => {
-  const { customers } = useContext(AccountingContext);
+  const { customers } = useContext(AccountingContext)!;
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -1307,7 +1238,7 @@ const CustomersView = () => {
 
 // Transactions View Component
 const TransactionsView = () => {
-  const { transactions, accounts } = useContext(AccountingContext); // Added accounts here
+  const { transactions, accounts } = useContext(AccountingContext)!; // Added accounts here
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -1382,7 +1313,7 @@ const TransactionsView = () => {
 
 // Accounts View Component
 const AccountsView = () => {
-  const { accounts } = useContext(AccountingContext);
+  const { accounts } = useContext(AccountingContext)!;
 
   return (
     <div className="space-y-6">
@@ -1442,7 +1373,7 @@ const ReportsView = () => {
     generateIncomeStatement,
     generateBalanceSheet,
     generateSalesReports
-  } = useContext(AccountingContext);
+  } = useContext(AccountingContext)!;
 
   const [reportType, setReportType] = useState('cashflow');
   const [startDate, setStartDate] = useState(() => {
@@ -1452,7 +1383,7 @@ const ReportsView = () => {
   });
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const [reportData, setReportData] = useState(null);
+  const [reportData, setReportData] = useState<any>(null);
 
   const handleGenerateReport = () => {
     const start = new Date(startDate);
@@ -1462,16 +1393,16 @@ const ReportsView = () => {
     let data;
     switch (reportType) {
       case 'cashflow':
-        data = generateCashFlowStatement(start, end);
+        data = generateCashFlowStatement(start.getTime(), end.getTime());
         break;
       case 'income':
-        data = generateIncomeStatement(start, end);
+        data = generateIncomeStatement(start.getTime(), end.getTime());
         break;
       case 'balance_sheet':
-        data = generateBalanceSheet(end); // Balance sheet is as of a date
+        data = generateBalanceSheet(end.getTime()); // Balance sheet is as of a date
         break;
       case 'sales':
-        data = generateSalesReports(start, end);
+        data = generateSalesReports(start.getTime(), end.getTime());
         break;
       default:
         data = null;
@@ -1537,11 +1468,11 @@ const ReportsView = () => {
               <p className="text-gray-300">Total Ticket Sales: <span className="font-semibold text-green-400">KES {reportData.totalTicketSales.toLocaleString()}</span></p>
               <h5 className="text-lg font-bold text-white mt-4 mb-2">Sales by Category:</h5>
               {Object.entries(reportData.salesByCategory).map(([cat, val]) => (
-                <p key={cat} className="text-gray-300 ml-4">{cat}: <span className="font-semibold text-white">KES {val.toLocaleString()}</span></p>
+                <p key={cat} className="text-gray-300 ml-4">{cat}: <span className="font-semibold text-white">KES {(val as number).toLocaleString()}</span></p>
               ))}
               <h5 className="text-lg font-bold text-white mt-4 mb-2">Sales by Event:</h5>
               {Object.entries(reportData.salesByEvent).map(([eventTitle, val]) => (
-                <p key={eventTitle} className="text-gray-300 ml-4">{eventTitle}: <span className="font-semibold text-white">KES {val.toLocaleString()}</span></p>
+                <p key={eventTitle} className="text-gray-300 ml-4">{eventTitle}: <span className="font-semibold text-white">KES {(val as number).toLocaleString()}</span></p>
               ))}
             </div>
           </div>
@@ -1605,14 +1536,61 @@ const ReportsView = () => {
   );
 };
 
+// Accounting Dashboard Component
+const AccountingDashboard = () => {
+  const [activeTab, setActiveTab] = useState('transactions');
+
+  const tabs = [
+    { id: 'transactions', label: 'Transactions', icon: CreditCard },
+    { id: 'accounts', label: 'Accounts', icon: BookOpen },
+    { id: 'events', label: 'Events', icon: Calendar },
+    { id: 'customers', label: 'Customers', icon: Users },
+    { id: 'reports', label: 'Reports', icon: FileText },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-xl font-bold text-white">Accounting Dashboard</h3>
+      
+      {/* Tabs */}
+      <div className="flex space-x-2 overflow-x-auto">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${
+              activeTab === tab.id
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-700 text-gray-400 hover:text-white hover:bg-gray-600'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {activeTab === 'transactions' && <TransactionsView />}
+      {activeTab === 'accounts' && <AccountsView />}
+      {activeTab === 'events' && <EventsView />}
+      {activeTab === 'customers' && <CustomersView />}
+      {activeTab === 'reports' && <ReportsView />}
+    </div>
+  );
+};
 
 // Main Accounting Dashboard Component
+interface CashflowManagementProps {
+  userRole: string;
+}
+
 export const CashflowManagement: React.FC<CashflowManagementProps> = ({ userRole }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
   // Use the AccountingContext to get real data
-  const { transactions, accounts, generateIncomeStatement } = useContext(AccountingContext);
+  const { transactions, accounts, generateIncomeStatement } = useContext(AccountingContext)!;
 
   // Calculate mock data based on actual transactions for demonstration
   const calculateCashflowData = useCallback(() => { // Made useCallback
@@ -1620,7 +1598,7 @@ export const CashflowManagement: React.FC<CashflowManagementProps> = ({ userRole
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
 
-    const { totalRevenue, totalExpenses, netProfit } = generateIncomeStatement(thirtyDaysAgo, today);
+    const { totalRevenue, totalExpenses, netProfit } = generateIncomeStatement(thirtyDaysAgo.getTime(), today.getTime());
 
     // Simplified calculation for other metrics - you'd refine this
     const totalCosts = totalExpenses;
