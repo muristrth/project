@@ -57,7 +57,8 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { firestoreDb, isAuthReady, userId } = useContext(FirebaseContext);
-  const { showToast } = useContext(ToastContext);
+  const toastContext = useContext(ToastContext);
+  const showToast = toastContext?.showToast ?? (() => {});
 
   // Fetch events from Firestore in real-time
   useEffect(() => {

@@ -225,7 +225,7 @@ const AdminDashboard: React.FC = () => {
   const [showEditEvent, setShowEditEvent] = useState(false);
 
   // State for edit form
-  const [editFormData, setEditFormData] = useState<Partial<Event>>({});
+  const [editFormData, setEditFormData] = useState<Partial<Event> & { artists?: string | string[] }>({});
   const [editErrors, setEditErrors] = useState<{ [key: string]: string }>({});
 
   if (!user || user.role !== 'admin') {

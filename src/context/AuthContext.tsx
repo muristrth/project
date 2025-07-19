@@ -45,7 +45,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Loading state for initial auth check
   const { firestoreDb, isAuthReady, userId: firebaseUserId } = useContext(FirebaseContext);
-  const { showToast } = useContext(ToastContext);
+  const toastContext = useContext(ToastContext);
+  const showToast = toastContext?.showToast ?? (() => {});
 
   // Listen for Firebase Auth state changes
   useEffect(() => {
