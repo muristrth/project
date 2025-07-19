@@ -22,10 +22,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useEvent, Event } from '../context/EventContext'; // Import Event interface
-import { useToast, AccountingContext } from '../components/CashflowManagement'; // Re-using ToastContext and AccountingContext
+import { useToast, AccountingContext, CashflowManagement } from '../components/CashflowManagement'; // Import AccountingContext and CashflowManagement
 import MarketingTools from '../components/MarketingTools';
 import AccessControl from '../components/AccessControl';
-import CashflowManagement from '../components/CashflowManagement';
 
 // Re-using Modal component from CashflowManagement
 const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ isOpen, onClose, title, children }) => {
