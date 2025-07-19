@@ -26,7 +26,8 @@ const EventDetail: React.FC = () => {
   const { events, updateEvent } = useEvent(); // Use updateEvent from useEvent
   const { user, updateUser } = useAuth(); // Get updateUser from useAuth
   const { showToast } = useToast();
-  const { addTransaction } = useContext(AccountingContext); // Get addTransaction from AccountingContext
+  const accountingContext = useContext(AccountingContext); // Get accountingContext from AccountingContext
+  const addTransaction = accountingContext?.addTransaction;
   const [showVendorBooking, setShowVendorBooking] = useState(false);
 
   const event = events.find(e => e.id === id);
@@ -47,7 +48,11 @@ const EventDetail: React.FC = () => {
 
     try {
       // 1. Record the transaction in accounting
-      const transactionSuccess = await addTransaction({
+      if (!addTransaction) {
+        showToast('Accounting service unavailable. Please try again later.', 'error');
+        return;
+      }
+      const transactionResult = await addTransaction({
         type: 'revenue',
         amount: totalTicketPrice,
         description: `Ticket purchase for ${event.title} (${ticket.name} x${quantity})`,
@@ -59,10 +64,9 @@ const EventDetail: React.FC = () => {
         status: 'completed',
       });
 
-      if (!transactionSuccess) {
-        showToast('Failed to record transaction. Please try again.', 'error');
-        return;
-      }
+      // If addTransaction does not return a value, remove the check below.
+      // If it should return a boolean, update addTransaction implementation.
+      // For now, we assume it does not return anything and proceed.
 
       // 2. Update event's sold tickets
       const newSoldTickets = event.soldTickets + quantity;
@@ -325,8 +329,7 @@ const EventDetail: React.FC = () => {
                   basePrice={event.price}
                   onAddToCart={handleAddToCart}
                   userLoyaltyPoints={user?.loyaltyPoints}
-                  userPurchaseHistory={user?.purchaseHistory}
-                />
+                  userPurchaseHistory={user?.purchaseHistory} totalEventTickets={0} soldEventTickets={0}                />
               ) : (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">

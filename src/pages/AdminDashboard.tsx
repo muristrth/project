@@ -218,7 +218,7 @@ const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const { events, deleteEvent, updateEvent } = useEvent(); // Use updateEvent from useEvent
   const { showToast } = useToast();
-  const { addEvent: addEventToAccounting } = useContext(AccountingContext); // Use addEvent from AccountingContext
+  useContext(AccountingContext); // Use addEvent from AccountingContext
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null); // Store full event object
   const [showCreateEvent, setShowCreateEvent] = useState(false);
