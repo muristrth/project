@@ -8,7 +8,8 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase'; // Ensure this path is correct for your firebase.ts
-import { FirebaseContext, ToastContext } from '../components/CashflowManagement'; // Re-using contexts from CashflowManagement
+import { FirebaseContext } from '../components/CashflowManagement';
+import { ToastContext } from './ToastContext';
 
 // Declare global variables for TypeScript (provided by Canvas environment)
 declare const __app_id: string | undefined;

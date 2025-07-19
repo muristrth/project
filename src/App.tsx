@@ -17,9 +17,9 @@ import Footer from './components/Footer';
 
 function App() {
   return (
-    <AuthProvider>
-      <EventProvider>
-        <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <EventProvider>
           <Router>
             <div className="min-h-screen bg-gray-900 text-white">
               <Navbar />
@@ -39,9 +39,9 @@ function App() {
               <Toast />
             </div>
           </Router>
-        </ToastProvider>
-      </EventProvider>
-    </AuthProvider>
+        </EventProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
