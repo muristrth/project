@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import { collection, query, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase'; // Ensure this path is correct for your firebase.ts
 import { FirebaseContext } from '../components/CashflowManagement';
-import { ToastContext } from '../context/ToastContext';
+import { ToastContext } from './ToastContext';
 
 // Declare global variables for TypeScript (provided by Canvas environment)
 declare const __app_id: string | undefined;
@@ -63,31 +63,70 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Fetch events from Firestore in real-time
   useEffect(() => {
-    if (!isAuthReady || !firestoreDb || !userId) {
-      console.log("Firebase or user not ready for event fetching.");
+    if (!isAuthReady || !firestoreDb) {
+      console.log("Firebase not ready for event fetching.");
       setIsLoading(false);
       return;
     }
 
-    // Events are public data for the app, stored under /artifacts/{appId}/public/data/events
-    const eventsCollectionRef = collection(firestoreDb, `artifacts/${appId}/public/data/events`);
-    const q = query(eventsCollectionRef);
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedEvents: Event[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data() as Omit<Event, 'id'> // Cast data to Event type, omitting 'id'
-      }));
-      setEvents(fetchedEvents);
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching events:", error);
-      showToast("Error loading events.", "error");
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe(); // Cleanup listener on unmount
-  }, [firestoreDb, isAuthReady, userId, showToast]);
+    // Initialize with sample events for demo
+    const sampleEvents: Event[] = [
+      {
+        id: '1',
+        title: 'AMAPIANO FRIDAY',
+        description: 'The hottest Amapiano night in the city featuring top DJs and live performances',
+        date: '2025-01-24',
+        time: '9:00 PM',
+        location: 'Nairobi',
+        venue: 'Ignition Club',
+        category: 'Amapiano',
+        price: 1500,
+        image: 'https://media.tacdn.com/media/attractions-splice-spp-674x446/12/77/ea/8b.jpg',
+        artists: ['DJ Maphorisa', 'Kabza De Small', 'Local Artists'],
+        totalTickets: 500,
+        soldTickets: 120,
+        coordinates: { lat: -1.286389, lng: 36.817223 },
+        createdAt: new Date()
+      },
+      {
+        id: '2',
+        title: '3STEP SATURDAY',
+        description: 'Experience the new wave of 3Step music with exclusive performances',
+        date: '2025-01-25',
+        time: '8:00 PM',
+        location: 'Nairobi',
+        venue: 'Westlands Arena',
+        category: '3Step',
+        price: 2000,
+        image: 'https://i.guim.co.uk/img/media/2b739bda5f193800f8dc1be58605866c622cf7ca/0_287_5351_3211/master/5351.jpg?width=465&dpr=1&s=none&crop=none',
+        artists: ['3Step Kings', 'Rising Stars', 'Local Mix'],
+        totalTickets: 400,
+        soldTickets: 85,
+        coordinates: { lat: -1.286389, lng: 36.817223 },
+        createdAt: new Date()
+      },
+      {
+        id: '3',
+        title: 'WEEKEND VIBES',
+        description: 'The ultimate weekend experience with both Amapiano and 3Step',
+        date: '2025-01-26',
+        time: '7:00 PM',
+        location: 'Nairobi',
+        venue: 'Sky Lounge, CBD',
+        category: 'Mixed',
+        price: 1800,
+        image: 'https://www.kenyanvibe.com/wp-content/uploads/2025/05/2-scaled.jpg',
+        artists: ['Mixed Artists', 'Special Guests'],
+        totalTickets: 300,
+        soldTickets: 45,
+        coordinates: { lat: -1.286389, lng: 36.817223 },
+        createdAt: new Date()
+      }
+    ];
+    
+    setEvents(sampleEvents);
+    setIsLoading(false);
+  }, [firestoreDb, isAuthReady, showToast]);
 
   // Add item to cart
   const addToCart = useCallback((item: CartItem) => {
@@ -108,6 +147,16 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     });
     showToast(`${item.quantity} ${item.eventTitle} tickets added to cart!`, 'success');
+  }, [showToast]);
+
+  // Remove item from cart
+  const removeFromCart = useCallback((index: number) => {
+    setCart((prevCart) => {
+      const newCart = [...prevCart];
+      newCart.splice(index, 1);
+      return newCart;
+    });
+    showToast("Item removed from cart.", "info");
   }, [showToast]);
 
   // Clear cart
@@ -179,6 +228,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     events,
     cart,
     addToCart,
+    removeFromCart,
     clearCart,
     updateEvent,
     addEvent,

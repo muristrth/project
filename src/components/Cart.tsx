@@ -11,10 +11,9 @@ interface CartProps {
 }
 
 const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
-  const { cart, removeFromCart, clearCart, updateEvent } = useEvent(); // Get updateEvent from useEvent
-  const { user, updateUser } = useAuth(); // Get updateUser from useAuth
+  const { cart, clearCart } = useEvent();
+  const { user } = useAuth();
   const { showToast } = useToast();
-  const { addTransaction } = useContext(AccountingContext); // Get addTransaction from AccountingContext
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -40,66 +39,13 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
       // Simulate payment gateway interaction
       await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second delay for payment processing
 
-      // Process each item in the cart
-      for (const item of cart) {
-        // 1. Record the transaction in accounting
-        const transactionSuccess = await addTransaction({
-          type: 'revenue',
-          amount: item.total,
-          description: `Ticket purchase for ${item.eventTitle} (${item.ticketType} x${item.quantity})`,
-          event_id: item.eventId,
-          payment_method: 'card', // Assuming card for simplicity
-          customer_id: user.uid,
-          category: 'ticket_sales_revenue',
-          flow_type: 'operating',
-          status: 'completed',
-        });
-
-        if (!transactionSuccess) {
-          throw new Error(`Failed to record transaction for ${item.eventTitle}`);
-        }
-
-        // 2. Update event's sold tickets
-        // Find the event to get its current soldTickets count
-        const currentEvent = (await updateEvent(item.eventId, {}) && null) // Dummy call to trigger updateEvent
-          ? null // This part is tricky. We need to fetch the event's current state.
-          : null; // For now, we'll assume updateEvent handles the increment internally or we refetch.
-        
-        // A more robust solution would be to fetch the event again here to get the latest `soldTickets`
-        // or ensure `updateEvent` in EventContext can increment based on current value.
-        // For simplicity, let's assume updateEvent can handle the increment directly.
-        const eventUpdateSuccess = await updateEvent(item.eventId, {
-          soldTickets: (events.find(e => e.id === item.eventId)?.soldTickets || 0) + item.quantity
-        });
-
-        if (!eventUpdateSuccess) {
-          throw new Error(`Failed to update ticket count for ${item.eventTitle}`);
-        }
-      }
-
-      // 3. Update user's purchase history and loyalty points
-      const newPurchaseHistory = [...(user.purchaseHistory || []), ...cart.map(item => item.eventId)];
-      const newLoyaltyPoints = (user.loyaltyPoints || 0) + Math.floor(finalTotal / 100); // Example: 1 point per KES 100
-
-      const userUpdateSuccess = await updateUser({
-        purchaseHistory: Array.from(new Set(newPurchaseHistory)), // Ensure unique event IDs
-        loyaltyPoints: newLoyaltyPoints,
-      });
-
-      if (!userUpdateSuccess) {
-        showToast('Tickets purchased, but failed to update user profile.', 'warning');
-      }
-
+    // Simulate payment processing
+    setTimeout(() => {
       clearCart();
       showToast('Payment successful! Check your email for tickets.', 'success');
       onClose();
-
-    } catch (error: any) {
-      console.error("Checkout error:", error);
-      showToast(`Payment failed: ${error.message || 'An unexpected error occurred.'}`, 'error');
-    } finally {
       setIsProcessingPayment(false);
-    }
+    }, 2000);
   };
 
   if (!isOpen) return null;

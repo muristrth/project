@@ -9,7 +9,7 @@ import {
 import { doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase'; // Ensure this path is correct for your firebase.ts
 import { FirebaseContext } from '../components/CashflowManagement';
-import { ToastContext } from './ToastContext';
+import { useToast } from './ToastContext';
 
 // Declare global variables for TypeScript (provided by Canvas environment)
 declare const __app_id: string | undefined;
@@ -45,68 +45,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Loading state for initial auth check
   const { firestoreDb, isAuthReady, userId: firebaseUserId } = useContext(FirebaseContext);
-  const toastContext = useContext(ToastContext);
-  const showToast = toastContext?.showToast ?? (() => {});
+  const { showToast } = useToast();
 
   // Listen for Firebase Auth state changes
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser && firestoreDb && isAuthReady) {
-        const userDocRef = doc(firestoreDb, `artifacts/${appId}/users/${firebaseUser.uid}/profile/data`);
-        // Listen to real-time updates for the user's profile
-        const unsubscribeFirestore = onSnapshot(userDocRef, (docSnap) => {
-          if (docSnap.exists()) {
-            setUser({ uid: firebaseUser.uid, ...docSnap.data() } as User);
-          } else {
-            // If user profile doesn't exist (e.g., new registration), create a basic one
-            const newUserProfile: User = {
-              uid: firebaseUser.uid,
-              name: firebaseUser.displayName || 'New User',
-              email: firebaseUser.email || '',
-              role: 'user', // Default role
-              loyaltyPoints: 0,
-              purchaseHistory: [],
-              subscriptionStatus: 'inactive',
-              createdAt: serverTimestamp(),
-            };
-            setDoc(userDocRef, newUserProfile, { merge: true })
-              .then(() => setUser(newUserProfile))
-              .catch(e => console.error("Error creating user profile:", e));
-          }
-          setIsLoading(false);
-        }, (error) => {
-          console.error("Error listening to user profile:", error);
-          showToast("Error loading user data.", "error");
-          setIsLoading(false);
-        });
-        return () => unsubscribeFirestore(); // Clean up Firestore listener
-      } else {
-        setUser(null);
-        setIsLoading(false);
-      }
-    });
-
-    return () => unsubscribeAuth(); // Clean up Auth listener
-  }, [firestoreDb, isAuthReady, showToast]); // Depend on firestoreDb and isAuthReady
+    // Initialize with demo users for development
+    setIsLoading(false);
+  }, []);
 
   // Login function
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // User state will be updated by onAuthStateChanged listener
+      // Demo login logic
+      let demoUser: User;
+      if (email === 'admin@ignition.com') {
+        demoUser = {
+          uid: 'admin-123',
+          name: 'Admin User',
+          email: 'admin@ignition.com',
+          role: 'admin',
+          loyaltyPoints: 1000,
+          purchaseHistory: ['1', '2'],
+          subscriptionStatus: 'active',
+          createdAt: new Date(),
+        };
+      } else if (email === 'staff@ignition.com') {
+        demoUser = {
+          uid: 'staff-123',
+          name: 'Staff User',
+          email: 'staff@ignition.com',
+          role: 'staff',
+          loyaltyPoints: 500,
+          purchaseHistory: ['1'],
+          subscriptionStatus: 'inactive',
+          createdAt: new Date(),
+        };
+      } else {
+        demoUser = {
+          uid: 'user-123',
+          name: 'Demo User',
+          email: 'user@ignition.com',
+          role: 'user',
+          loyaltyPoints: 250,
+          purchaseHistory: [],
+          subscriptionStatus: 'inactive',
+          createdAt: new Date(),
+        };
+      }
+      setUser(demoUser);
       return true;
     } catch (error: any) {
       console.error("Login error:", error);
-      let errorMessage = "Login failed. Please check your credentials.";
-      if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address.';
-      } else if (error.code === 'auth/user-disabled') {
-        errorMessage = 'This account has been disabled.';
-      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        errorMessage = 'Invalid email or password.';
-      }
-      showToast(errorMessage, 'error');
+      showToast("Login failed. Please check your credentials.", 'error');
       return false;
     } finally {
       setIsLoading(false);
@@ -117,23 +108,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = useCallback(async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const newUser = userCredential.user;
-
-      if (firestoreDb) {
-        // Create user profile in Firestore
-        const userDocRef = doc(firestoreDb, `artifacts/${appId}/users/${newUser.uid}/profile/data`);
-        await setDoc(userDocRef, {
-          name,
-          email,
-          role: 'user', // Default role for new registrations
-          loyaltyPoints: 0,
-          purchaseHistory: [],
-          subscriptionStatus: 'inactive',
-          createdAt: serverTimestamp(),
-        });
-      }
-      // User state will be updated by onAuthStateChanged listener
+      // Demo registration logic
+      const newUser: User = {
+        uid: 'new-user-' + Date.now(),
+        name,
+        email,
+        role: 'user',
+        loyaltyPoints: 0,
+        purchaseHistory: [],
+        subscriptionStatus: 'inactive',
+        createdAt: new Date(),
+      };
+      setUser(newUser);
       return true;
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -148,13 +134,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  }, [firestoreDb, showToast]);
+  }, [showToast]);
 
   // Logout function
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      await signOut(auth);
       setUser(null); // Clear user state immediately
       showToast("Logged out successfully!", "info");
     } catch (error) {
@@ -167,13 +152,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Update user profile function
   const updateUser = useCallback(async (data: Partial<User>) => {
-    if (!user || !firestoreDb) {
-      showToast("User not logged in or Firestore not ready.", "error");
+    if (!user) {
+      showToast("User not logged in.", "error");
       return false;
     }
     try {
-      const userDocRef = doc(firestoreDb, `artifacts/${appId}/users/${user.uid}/profile/data`);
-      await updateDoc(userDocRef, data);
+      setUser(prev => prev ? { ...prev, ...data } : null);
       showToast("Profile updated successfully!", "success");
       return true;
     } catch (error) {
@@ -181,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       showToast("Failed to update profile.", "error");
       return false;
     }
-  }, [user, firestoreDb, showToast]);
+  }, [user, showToast]);
 
   const contextValue = {
     user,

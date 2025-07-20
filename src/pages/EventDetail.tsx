@@ -17,18 +17,15 @@ import {
 import { useEvent } from '../context/EventContext'; // Updated import
 import { useAuth } from '../context/AuthContext'; // Updated import
 import { useToast } from '../context/ToastContext';
-import { AccountingContext } from '../components/CashflowManagement'; // Import AccountingContext
 import AdvancedTicketing from '../components/AdvancedTicketing';
 import EventMap from '../components/EventMap';
 import VendorBooking from '../components/VendorBooking';
 
 const EventDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { events, updateEvent } = useEvent(); // Use updateEvent from useEvent
-  const { user, updateUser } = useAuth(); // Get updateUser from useAuth
+  const { events, addToCart } = useEvent();
+  const { user } = useAuth();
   const { showToast } = useToast();
-  const accountingContext = useContext(AccountingContext); // Get accountingContext from AccountingContext
-  const addTransaction = accountingContext?.addTransaction;
   const [showVendorBooking, setShowVendorBooking] = useState(false);
 
   const event = events.find(e => e.id === id);
@@ -45,59 +42,17 @@ const EventDetail: React.FC = () => {
       return;
     }
 
-    const totalTicketPrice = ticket.price * quantity;
-
-    try {
-      // 1. Record the transaction in accounting
-      if (!addTransaction) {
-        showToast('Accounting service unavailable. Please try again later.', 'error');
-        return;
-      }
-      const transactionResult = await addTransaction({
-        type: 'revenue',
-        amount: totalTicketPrice,
-        description: `Ticket purchase for ${event.title} (${ticket.name} x${quantity})`,
-        event_id: event.id,
-        payment_method: 'card', // Assuming card for simplicity, can be dynamic
-        customer_id: user.uid,
-        category: 'ticket_sales_revenue', // Use the specific revenue account
-        flow_type: 'operating',
-        status: 'completed',
-      });
-
-      // If addTransaction does not return a value, remove the check below.
-      // If it should return a boolean, update addTransaction implementation.
-      // For now, we assume it does not return anything and proceed.
-
-      // 2. Update event's sold tickets
-      const newSoldTickets = event.soldTickets + quantity;
-      const eventUpdateSuccess = await updateEvent(event.id, { soldTickets: newSoldTickets });
-
-      if (!eventUpdateSuccess) {
-        showToast('Failed to update event ticket count. Please contact support.', 'error');
-        // Potentially reverse transaction here if updateEvent failed
-        return;
-      }
-
-      // 3. Update user's purchase history and loyalty points
-      const newPurchaseHistory = [...(user.purchaseHistory || []), event.id];
-      const newLoyaltyPoints = (user.loyaltyPoints || 0) + Math.floor(totalTicketPrice / 100); // Example: 1 point per KES 100
-      
-      const userUpdateSuccess = await updateUser({
-        purchaseHistory: newPurchaseHistory,
-        loyaltyPoints: newLoyaltyPoints,
-      });
-
-      if (userUpdateSuccess) {
-        showToast('Tickets purchased successfully!', 'success');
-      } else {
-        showToast('Tickets purchased, but failed to update user profile.', 'warning');
-      }
-
-    } catch (error) {
-      console.error("Error during ticket purchase:", error);
-      showToast('An unexpected error occurred during purchase.', 'error');
-    }
+    // Add to cart instead of direct purchase
+    const cartItem = {
+      eventId: event.id,
+      eventTitle: event.title,
+      ticketType: ticket.name,
+      quantity,
+      price: ticket.price,
+      total: ticket.price * quantity
+    };
+    
+    addToCart(cartItem);
   };
 
   const handleShare = () => {
