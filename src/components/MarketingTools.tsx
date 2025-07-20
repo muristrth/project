@@ -51,48 +51,32 @@ const MarketingTools: React.FC<MarketingToolsProps> = ({ eventId, userRole }) =>
 
   // Fetch all users from Firestore to build audience segments
   useEffect(() => {
-    if (!isAuthReady || !firestoreDb) {
-      console.log("Firebase not ready for user fetching.");
-      return;
-    }
-
-    // Users are private data, but for admin/staff marketing tools, we fetch all users
-    // In a real app, you might have a separate 'users' collection at a public level
-    // or aggregate user data for marketing purposes. For this example, we'll assume
-    // an admin can access all user profiles.
-    const usersCollectionRef = collection(firestoreDb, `artifacts/${appId}/users`);
-
-    const unsubscribe = onSnapshot(usersCollectionRef, (snapshot) => {
-      const fetchedUsers: User[] = [];
-      snapshot.docs.forEach(userDoc => {
-        // Each user document represents a user's private data, so we need to go one level deeper
-        const profileDocRef = doc(firestoreDb, `artifacts/${appId}/users/${userDoc.id}/profile/data`);
-        onSnapshot(profileDocRef, (profileSnap: import('firebase/firestore').DocumentSnapshot) => {
-          if (profileSnap.exists()) {
-            fetchedUsers.push({ id: profileSnap.id, ...profileSnap.data() } as unknown as User);
-          }
-          // Only set users and stop loading after all sub-collections are processed
-          // This is a simplified approach, a more robust solution would track all sub-collection fetches
-          setAllUsers(fetchedUsers);
-          setIsLoadingUsers(false);
-        }, (error) => {
-          console.error("Error fetching user profile:", error);
-          showToast("Error loading user data for segments.", "error");
-          setIsLoadingUsers(false);
-        });
-      });
-      if (snapshot.empty) {
-        setAllUsers([]);
-        setIsLoadingUsers(false);
+    // Initialize with demo users
+    const demoUsers: User[] = [
+      {
+        uid: 'user1',
+        name: 'John Doe',
+        email: 'john@example.com',
+        role: 'user',
+        loyaltyPoints: 150,
+        purchaseHistory: ['1'],
+        subscriptionStatus: 'active',
+        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uid: 'user2',
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        role: 'user',
+        loyaltyPoints: 600,
+        purchaseHistory: ['1', '2', '3'],
+        subscriptionStatus: 'active',
+        createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000)
       }
-    }, (error) => {
-      console.error("Error fetching users collection:", error);
-      showToast("Error loading users for marketing.", "error");
-      setIsLoadingUsers(false);
-    });
-
-    return () => unsubscribe();
-  }, [isAuthReady, firestoreDb, showToast]);
+    ];
+    setAllUsers(demoUsers);
+    setIsLoadingUsers(false);
+  }, []);
 
 
   const tabs = [

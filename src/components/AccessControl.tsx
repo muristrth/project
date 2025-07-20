@@ -109,56 +109,52 @@ const AccessControl: React.FC<AccessControlProps> = ({ eventId, userRole }) => {
   }, [isAuthReady, firestoreDb, eventId, showToast]);
 
   const handleTicketScan = useCallback(async (ticketId: string) => {
-    if (isScanning || !firestoreDb || !currentUserId) return;
+    if (isScanning) return;
 
     setIsScanning(true);
     setLastScanResult(null); // Clear previous result
 
     try {
-      // 1. Find the ticket in Firestore
-      const ticketDocRef = doc(firestoreDb, `artifacts/${appId}/public/data/tickets`, ticketId);
-      const ticketSnap = await getDoc(ticketDocRef);
-
+      // Find the ticket in demo data
+      const ticket = tickets.find(t => t.id === ticketId);
       let scanStatus: 'valid_entry' | 'already_used' | 'invalid_ticket';
-      let ticketData: Ticket | undefined;
 
-      if (!ticketSnap.exists()) {
+      if (!ticket) {
         scanStatus = 'invalid_ticket';
         showToast('Invalid Ticket!', 'error');
       } else {
-        ticketData = ticketSnap.data() as Ticket;
-        if (ticketData.status === 'used') {
+        if (ticket.status === 'used') {
           scanStatus = 'already_used';
           showToast('Ticket Already Used!', 'info');
-        } else if (ticketData.status === 'purchased') {
+        } else if (ticket.status === 'purchased') {
           scanStatus = 'valid_entry';
-          // Update ticket status to 'used'
-          await updateDoc(ticketDocRef, { status: 'used' });
+          // Update ticket status in demo data
+          setTickets(prev => prev.map(t => 
+            t.id === ticketId ? { ...t, status: 'used' as const } : t
+          ));
           showToast('Ticket Valid! Entry Granted.', 'success');
         } else {
-          // Should not happen if statuses are only 'purchased', 'used', 'invalid'
           scanStatus = 'invalid_ticket';
           showToast('Invalid Ticket Status!', 'error');
         }
       }
 
-      // 2. Log the scan result
+      // Log the scan result
       const newScanLog: ScanLog = {
-        id: '', // Firestore will generate
+        id: Date.now().toString(),
         ticketId: ticketId,
-        userId: ticketData?.userId || 'N/A', // Use actual user ID from ticket
-        eventId: ticketData?.eventId || eventId || 'N/A',
-        userName: ticketData?.userName || 'Unknown User', // Use actual user name from ticket
-        ticketType: ticketData?.ticketType || 'N/A',
+        userId: ticket?.userId || 'N/A',
+        eventId: ticket?.eventId || eventId || 'N/A',
+        userName: ticket?.userName || 'Unknown User',
+        ticketType: ticket?.ticketType || 'N/A',
         scanStatus: scanStatus,
-        timestamp: serverTimestamp(),
+        timestamp: new Date(),
         gateNumber: 'Gate 1', // This could be dynamic based on staff's assigned gate
-        scannedBy: currentUserId,
+        scannedBy: 'current-user',
       };
 
-      const scanLogsRef = collection(firestoreDb, `artifacts/${appId}/public/data/scanLogs`);
-      const docRef = await addDoc(scanLogsRef, newScanLog);
-      setLastScanResult({ ...newScanLog, id: docRef.id, timestamp: new Date() }); // Update with generated ID and local timestamp
+      setScanLogs(prev => [newScanLog, ...prev]);
+      setLastScanResult(newScanLog);
 
     } catch (error: any) {
       console.error("Error during ticket scan:", error);
@@ -166,7 +162,7 @@ const AccessControl: React.FC<AccessControlProps> = ({ eventId, userRole }) => {
     } finally {
       setIsScanning(false);
     }
-  }, [firestoreDb, currentUserId, eventId, showToast]);
+  }, [tickets, eventId, showToast]);
 
   const renderScanner = () => (
     <div className="space-y-8">

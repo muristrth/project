@@ -99,11 +99,6 @@ const VendorBooking: React.FC<VendorBookingProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!firestoreDb || !isAuthReady || !userId) {
-      showToast("Firebase not ready or user not authenticated.", "error");
-      return;
-    }
-
     // Validation
     if (!formData.businessName || !formData.contactName || !formData.email || !formData.phone || !formData.eventDate) {
       showToast('Please fill in all required fields, including Event Date.', 'error');
@@ -116,17 +111,15 @@ const VendorBooking: React.FC<VendorBookingProps> = ({
     const totalPrice = calculatePrice();
 
     try {
-      const vendorBookingsRef = collection(firestoreDb, `artifacts/${appId}/public/data/vendorBookings`);
-      await addDoc(vendorBookingsRef, {
+      // Simulate vendor booking submission
+      console.log('Vendor booking submitted:', {
         ...formData,
-        eventId: eventId || null,
-        eventTitle: eventTitle,
-        totalPrice: totalPrice,
-        status: 'pending', // e.g., 'pending', 'approved', 'rejected'
-        submittedBy: userId, // Record who submitted the request
-        submissionDate: serverTimestamp(),
+        eventId,
+        eventTitle,
+        totalPrice,
+        status: 'pending'
       });
-
+      
       showToast(`Vendor space request submitted successfully! Total: KES ${totalPrice.toLocaleString()}`, 'success');
       onClose();
       // Reset form
