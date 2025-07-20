@@ -2,7 +2,8 @@ import React, { useContext, useState } from 'react';
 import { X, Plus, Minus, CreditCard, Trash2 } from 'lucide-react';
 import { useEvent } from '../context/EventContext';
 import { useAuth } from '../context/AuthContext';
-import { useToast, AccountingContext } from '../components/CashflowManagement'; // Import AccountingContext
+import { useToast } from '../context/ToastContext';
+import { AccountingContext } from '../components/CashflowManagement'; // Import AccountingContext
 
 interface CartProps {
   isOpen: boolean;

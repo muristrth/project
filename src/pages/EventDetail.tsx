@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { useEvent } from '../context/EventContext'; // Updated import
 import { useAuth } from '../context/AuthContext'; // Updated import
-import { useToast, AccountingContext } from '../components/CashflowManagement'; // Re-using ToastContext and AccountingContext
+import { useToast } from '../context/ToastContext';
+import { AccountingContext } from '../components/CashflowManagement'; // Import AccountingContext
 import AdvancedTicketing from '../components/AdvancedTicketing';
 import EventMap from '../components/EventMap';
 import VendorBooking from '../components/VendorBooking';

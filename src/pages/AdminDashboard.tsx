@@ -22,7 +22,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useEvent, Event } from '../context/EventContext'; // Import Event interface
-import { useToast, AccountingContext, CashflowManagement } from '../components/CashflowManagement'; // Import AccountingContext and CashflowManagement
+import { useToast } from '../context/ToastContext';
+import { AccountingContext, CashflowManagement } from '../components/CashflowManagement'; // Import AccountingContext and CashflowManagement
 import MarketingTools from '../components/MarketingTools';
 import AccessControl from '../components/AccessControl';
 

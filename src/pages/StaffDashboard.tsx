@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext'; // Updated import
 import { useEvent } from '../context/EventContext'; // Updated import
-import { useToast } from '../components/CashflowManagement'; // Re-using ToastContext
+import { useToast } from '../context/ToastContext';
 import AccessControl from '../components/AccessControl';
 
 const StaffDashboard: React.FC = () => {

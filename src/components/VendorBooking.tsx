@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { X, Store, Calculator, CreditCard, MapPin, Package, Users, DollarSign } from 'lucide-react';
-import { useToast, FirebaseContext } from '../components/CashflowManagement'; // Import FirebaseContext
+import { useToast } from '../context/ToastContext';
+import { FirebaseContext } from '../components/CashflowManagement'; // Import FirebaseContext
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // Declare global variables for TypeScript (provided by Canvas environment)

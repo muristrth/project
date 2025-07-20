@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Music, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext'; // Updated import
-import { useToast } from '../components/CashflowManagement'; // Re-using ToastContext
+import { useToast } from '../context/ToastContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');

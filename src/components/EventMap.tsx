@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Navigation, ExternalLink, Phone, Clock, Calendar } from 'lucide-react';
-import { useToast } from '../components/CashflowManagement'; // Assuming ToastContext is available
+import { useToast } from '../context/ToastContext';
 
 interface EventMapProps {
   location: string;

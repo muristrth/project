@@ -11,7 +11,8 @@ import {
   Download,
   Share2
 } from 'lucide-react';
-import { useToast, FirebaseContext } from '../components/CashflowManagement';
+import { useToast } from '../context/ToastContext';
+import { FirebaseContext } from '../components/CashflowManagement';
 import { collection, query, onSnapshot, getDocs, where, serverTimestamp, addDoc, doc } from 'firebase/firestore';
 
 // Declare global variables for TypeScript (provided by Canvas environment)

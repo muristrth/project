@@ -12,7 +12,8 @@ import {
   Download,
   UserCheck
 } from 'lucide-react';
-import { useToast, FirebaseContext } from '../components/CashflowManagement';
+import { useToast } from '../context/ToastContext';
+import { FirebaseContext } from '../components/CashflowManagement';
 import { useEvent, Event } from '../context/EventContext'; // Import Event and useEvent
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
